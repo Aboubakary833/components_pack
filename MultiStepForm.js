@@ -1,8 +1,9 @@
 class MultiStepForm {
   #formElement;
   #options = {
-    fieldPerStep: 2,
+    fieldsPerStep: 2,
     fieldClassName: "msf_field",
+    cardClassNames: ''
   };
 
   #stepsCount;
@@ -29,24 +30,33 @@ class MultiStepForm {
         );
     });
 
+    this.#initFields()
+
+    this.#stepsCount = Math.round(
+      this.#fields.length / this.#options.fieldsPerStep
+    );
+    this.#initStep();
+    window.addEventListener("stepChanged", this.#update.bind(this));
+    dispatchEvent(new Event('stepChanged'))
+  }
+
+  /**
+   * Query all fields from the form
+   */
+  #initFields() {
     this.#fields = Array.from(
       this.#formElement.querySelectorAll(`.${this.#options.fieldClassName}`)
     );
-
-    this.#stepsCount = Math.round(
-      this.#fields.length / this.#options.fieldPerStep
-    );
-    this.#initStep();
-
-    window.addEventListener("stepChanged", this.#update);
   }
 
   /**
    * Upadate when form UI change step and renitialize the class steps props
    */
   #update() {
+    this.#initFields()
     this.#pointer++;
     this.#initStep();
+    
   }
 
   /**
@@ -56,23 +66,32 @@ class MultiStepForm {
     this.#previousStep =
       this.#pointer > 1
         ? {
-            postion: this.#pointer - 1,
-            content: null,
+            position: this.#pointer - 1,
+            content: this.getContent(this.#pointer - 1),
           }
         : undefined;
-
     this.#currentStep = {
-      postion: this.#pointer,
-      content: null,
+      position: this.#pointer,
+      content: this.getContent(this.#pointer),
     };
 
     this.#nextStep =
       this.#stepsCount > 1 && this.#pointer < this.#stepsCount
         ? {
-            postion: this.#pointer + 1,
-            content: null,
+            position: this.#pointer + 1,
+            content: this.getContent(this.#pointer + 1),
           }
         : undefined;
+  }
+
+  getContent(pointer) {
+    if(pointer <= 1) {
+      return this.#fields.slice(0, this.#options.fieldsPerStep)
+    }
+    return this.#fields.slice(
+      (pointer - 1) * this.#options.fieldsPerStep,
+      pointer * this.#options.fieldsPerStep
+    )
   }
 }
 
